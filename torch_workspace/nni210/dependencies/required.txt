@@ -1,0 +1,23 @@
+astor
+cloudpickle
+colorama
+filelock
+json_tricks >= 3.15.5
+numpy < 1.22 ; python_version < "3.8"
+numpy ; python_version >= "3.8"
+packaging
+pandas
+prettytable
+psutil
+PythonWebHDFS
+pyyaml >= 5.4
+requests
+responses
+schema
+scikit-learn >= 0.24.1
+scipy < 1.8 ; python_version < "3.8"
+scipy ; python_version >= "3.8"
+tqdm
+typeguard
+typing_extensions >= 4.0.0
+websockets >= 10.1

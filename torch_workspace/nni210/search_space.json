@@ -1,0 +1,6 @@
+{
+    "lr":{"_type":"uniform","_value":[0.1, 4.10]},
+    "momentum":{"_type":"uniform","_value":[0, 1]},
+    "max_grad_norm":{"_type":"uniform","_value":[0, 10]},
+    "mini_batch_size": {"_type":"choice","_value":[512]}
+}

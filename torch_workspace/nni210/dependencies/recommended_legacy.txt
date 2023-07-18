@@ -1,0 +1,22 @@
+-f https://download.pytorch.org/whl/torch_stable.html
+torch == 1.7.1+cpu
+torchvision == 0.8.2+cpu
+
+# It will install pytorch-lightning 0.8.x and unit tests won't work.
+# Latest version has conflict with tensorboard and tensorflow 1.x.
+pytorch-lightning
+torchmetrics
+
+lightgbm
+onnx
+peewee
+graphviz
+gym < 0.23
+tianshou >= 0.4.1, < 0.4.9
+matplotlib
+timm >= 0.5.4
+
+# TODO: time to drop tensorflow 1.x
+keras
+tensorflow < 2.0
+protobuf <= 3.20.1

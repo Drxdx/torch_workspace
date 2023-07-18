@@ -1,0 +1,61 @@
+searchSpaceFile: search_space.json
+trialCommand: python3 mnist.py
+trialGpuNumber: 0
+trialConcurrency: 5
+maxTrialNumber: 20
+tuner:
+  name: TPE
+  classArgs:
+    optimize_mode: maximize
+# For local, remote, openpai, and aml, NNI can use multiple training services at one time
+trainingService:
+  - platform: local
+  - platform: remote
+    machineList:
+      - host: ${your server's IP or domain name}
+        user: ${your user name}
+        ssh_key_file: ~/.ssh/id_rsa
+  - platform: aml
+    dockerImage: msranni/nni
+    subscriptionId: ${your subscription ID}
+    resourceGroup: ${your resource group}
+    workspaceName: ${your workspace name}
+    computeTarget: ${your compute target}
+  - platform: kubeflow
+    reuseMode: true
+    worker:
+      command:
+      code_directory: 
+      dockerImage: msranni/nni
+      cpuNumber: 
+      gpuNumber: 
+      memorySize: 
+      replicas: 
+    operator: tf-operator
+    storage:
+      storageType: 
+      azureAccount: 
+      azureShare: 
+      keyVaultName: 
+      keyVaultKey: 
+    apiVersion: v1
+  - platform: frameworkcontroller
+    reuseMode: true
+    serviceAccountName: 
+    taskRoles:
+      - name: worker
+        dockerImage: 'msranni/nni:latest'
+        taskNumber: 
+        command: 
+        gpuNumber: 
+        cpuNumber: 
+        memorySize: 
+        framework_attempt_completion_policy:
+          min_failed_task_count: 1
+          minSucceedTaskCount: 1
+    storage:
+      storageType: 
+      azureAccount: 
+      azureShare: 
+      keyVaultName: 
+      keyVaultKey: 

@@ -1,0 +1,101 @@
+trigger: none
+pr: none
+schedules:
+- cron: 0 20 * * *
+  branches:
+    include: [ master ]
+  always: true
+
+# variables set on VSO: (for security concern)
+#   manager_ip
+#   worker_ip
+#   password_in_docker
+
+jobs:
+- job: remote_linux2linux
+  pool: nni-it-1es-11
+  timeoutInMinutes: 120
+
+  steps:
+  # TODO: We don't currently have a test for GPU.
+  # And nvidia-docker is not installed yet.
+
+  - template: templates/install-dependencies.yml
+    parameters:
+      platform: ubuntu-latest
+      python_env: venv
+
+  - template: templates/install-nni.yml
+    parameters:
+      wheel: true
+      extra_dep: SMAC,BOHB
+
+  - template: templates/install-customized-tuner.yml
+
+  - script: |
+      sudo systemctl enable nfs-kernel-server
+    displayName: Enable NFS service
+
+  - script: |
+      set -e
+      mkdir -p /tmp/nnitest/$(Build.BuildId)
+      cp Dockerfile /tmp/nnitest/$(Build.BuildId)
+      cp -r dist /tmp/nnitest/$(Build.BuildId)
+      cp -r test /tmp/nnitest/$(Build.BuildId)
+      cp -r test/vso_tools/interim_patch.py /tmp/nnitest/$(Build.BuildId)
+    displayName: Prepare for docker
+
+  # TODO: Delete variables on pipeline when the PR that introduced this is merged.
+  - script: |
+      set -e
+      export worker_ip=localhost
+      export manager_ip=host.docker.internal
+      export password_in_docker=123456
+      export NFS_IP=host.docker.internal
+      export Exported_Directory=/var/nfs/general
+      echo "##vso[task.setvariable variable=worker_ip]${worker_ip}"
+      echo "##vso[task.setvariable variable=manager_ip]${manager_ip}"
+      echo "##vso[task.setvariable variable=password_in_docker]${password_in_docker}"
+      echo "##vso[task.setvariable variable=NFS_IP]${NFS_IP}"
+      echo "##vso[task.setvariable variable=Exported_Directory]${Exported_Directory}"
+    displayName: Override environment variables
+
+  - script: |
+      set -e
+      python /tmp/nnitest/$(Build.BuildId)/test/vso_tools/start_docker.py --sudo $(NNI_RELEASE) $(Build.BuildId) $(password_in_docker)
+    displayName: Run a worker in docker
+
+  - script: |
+      cd test
+      python training_service/nnitest/generate_ts_config.py \
+          --ts remote \
+          --remote_reuse true \
+          --remote_user nni \
+          --remote_host $(worker_ip) \
+          --remote_port $(docker_port) \
+          --remote_pwd $(password_in_docker) \
+          --nni_manager_ip $(manager_ip) \
+          --azurestoragetoken $(azureblob_token_test) \
+          --nfs_server $(NFS_IP) \
+          --local_mount_point $(LOCAL_MOUNT_POINT) \
+          --remote_mount_point $(REMOTE_MOUNT_POINT) \
+          --exported_directory $(Exported_Directory)
+      python training_service/nnitest/run_tests.py --config training_service/config/integration_tests.yml --ts remote
+    displayName: Integration test (reuse mode)
+
+  - script: |
+      cd test
+      python training_service/nnitest/generate_ts_config.py \
+          --ts remote \
+          --remote_reuse false \
+          --remote_user nni \
+          --remote_host $(worker_ip) \
+          --remote_port $(docker_port) \
+          --remote_pwd $(password_in_docker) \
+          --nni_manager_ip $(manager_ip)
+      python training_service/nnitest/run_tests.py --config training_service/config/integration_tests.yml --ts remote
+    displayName: Integration test
+
+  - template: templates/save-crashed-info.yml
+    parameters:
+      training_service: remote

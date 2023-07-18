@@ -1,0 +1,10 @@
+steps:
+
+- task: NodeTool@0
+  inputs:
+    versionSpec: '16.x'
+- script: |
+    npm install npm@latest -g
+    npx https://github.com/microsoft/azure-pipeline-filter.git
+  name: execution
+  displayName: NPM Install & Filter

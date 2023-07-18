@@ -1,0 +1,18 @@
+trialCommand: python3 FashionMNIST_keras.py
+trialGpuNumber: 1
+trialConcurrency: 4
+maxExperimentDuration: 48h
+maxTrialNumber: 200
+searchSpace: {}  # search space of NetworkMorphism is provided via classArgs
+tuner:
+  name: NetworkMorphism
+  classArgs:
+    optimize_mode: maximize   # maximize or minimize
+    task: cv                  # for now, this tuner only supports cv domain
+    input_width: 28           # input image width
+    input_channel: 1          # input image channel
+    n_output_node: 10         # number of classes
+trainingService:
+  platform: local
+  useActiveGpu: false  # NOTE: Use "true" if you are using an OS with graphical interface (e.g. Windows 10, Ubuntu desktop)
+                       # Check the doc for details: https://nni.readthedocs.io/en/latest/reference/experiment_config.html#useactivegpu

@@ -1,0 +1,36 @@
+{
+    "name": "nni-jupyter-extension",
+    "version": "999.0.0-developing",
+    "license": "MIT",
+    "scripts": {
+        "build": "tsc && jupyter labextension build ."
+    },
+    "dependencies": {
+        "@jupyterlab/application": "<3.1.0",
+        "@jupyterlab/launcher": "<3.1.0"
+    },
+    "devDependencies": {
+        "@jupyterlab/builder": "3.0.9"
+    },
+    "resolutions": {
+        "@jupyterlab/apputils": "<3.1.0",
+        "@jupyterlab/buildutils": "<3.1.0",
+        "@jupyterlab/codeeditor": "<3.1.0",
+        "@jupyterlab/codemirror": "<3.1.0",
+        "@jupyterlab/docregistry": "<3.1.0",
+        "@jupyterlab/nbformat": "<3.1.0",
+        "@jupyterlab/rendermime-interfaces": "<3.1.0",
+        "@jupyterlab/rendermime": "<3.1.0",
+        "@jupyterlab/services": "<6.1.0",
+        "@jupyterlab/settingregistry": "<3.1.0",
+        "@jupyterlab/statedb": "<3.1.0",
+        "@jupyterlab/statusbar": "<3.1.0",
+        "@jupyterlab/translation": "<3.1.0",
+        "@jupyterlab/ui-components": "<3.1.0"
+    },
+    "jupyterlab": {
+        "extension": true,
+        "outputDir": "dist"
+    },
+    "main": "build/index.js"
+}

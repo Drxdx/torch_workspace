@@ -1,0 +1,76 @@
+trigger: none
+pr: none
+schedules:
+- cron: 0 20 * * *
+  branches:
+    include: [ master ]
+  always: true
+
+jobs:
+- job: hybrid
+  pool: nni-it-1es-11
+  timeoutInMinutes: 90
+
+  steps:
+  # TODO: consider adding GPU tests here
+
+  - template: templates/install-dependencies.yml
+    parameters:
+      platform: ubuntu-latest
+      python_env: venv
+
+  - template: templates/install-dependencies-aml.yml
+
+  - template: templates/install-nni.yml
+    parameters:
+      wheel: true
+      extra_dep: SMAC,BOHB
+
+  - template: templates/install-customized-tuner.yml
+
+  # These parts are exactly same as remote.
+  # Refactor these as templates when the refactor is done.
+  - script: |
+      set -e
+      mkdir -p /tmp/nnitest/$(Build.BuildId)
+      cp Dockerfile /tmp/nnitest/$(Build.BuildId)
+      cp -r dist /tmp/nnitest/$(Build.BuildId)
+      cp -r test /tmp/nnitest/$(Build.BuildId)
+      cp -r test/vso_tools/interim_patch.py /tmp/nnitest/$(Build.BuildId)
+    displayName: Prepare for docker
+
+  - script: |
+      set -e
+      export worker_ip=localhost
+      export manager_ip=host.docker.internal
+      export password_in_docker=123456
+      echo "##vso[task.setvariable variable=worker_ip]${worker_ip}"
+      echo "##vso[task.setvariable variable=manager_ip]${manager_ip}"
+      echo "##vso[task.setvariable variable=password_in_docker]${password_in_docker}"
+    displayName: Override environment variables
+
+  - script: |
+      set -e
+      python /tmp/nnitest/$(Build.BuildId)/test/vso_tools/start_docker.py --sudo $(NNI_RELEASE) $(Build.BuildId) $(password_in_docker)
+    displayName: Run a worker in docker
+  # End of duplicated region
+
+  - script: |
+      cd test
+      python training_service/nnitest/generate_ts_config.py \
+          --ts hybrid \
+          --remote_reuse true \
+          --remote_user nni \
+          --remote_host $(worker_ip) \
+          --remote_pwd $(password_in_docker) \
+          --remote_port $(docker_port) \
+          --nni_manager_ip $(manager_ip) \
+          --subscription_id $(subscription_id) \
+          --resource_group $(resource_group) \
+          --workspace_name $(workspace_name) \
+          --compute_target $(compute_target) \
+          --config_version v2
+      python training_service/nnitest/run_tests.py --config training_service/config/integration_tests_config_v2.yml --ts hybrid
+    displayName: Integration test
+
+  - template: templates/save-crashed-info.yml

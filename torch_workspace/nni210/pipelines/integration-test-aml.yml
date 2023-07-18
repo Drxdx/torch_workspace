@@ -1,0 +1,53 @@
+trigger: none
+pr: none
+schedules:
+- cron: 0 20 * * *
+  branches:
+    include: [ master ]
+  always: true
+
+jobs:
+- job: aml
+  pool:
+    vmImage: ubuntu-latest
+  timeoutInMinutes: 120
+
+  steps:
+  - template: templates/install-dependencies.yml
+    parameters:
+      platform: ubuntu-latest
+
+  - template: templates/install-dependencies-aml.yml
+
+  - template: templates/install-nni.yml
+    parameters:
+      wheel: true
+      extra_dep: SMAC,BOHB
+
+  - template: templates/install-customized-tuner.yml
+
+  - script: |
+      set -e
+      docker login -u nnidev -p $(docker_hub_password)
+      echo '## Build docker image ##'
+      docker build --build-arg NNI_RELEASE=${NNI_RELEASE} -t nnidev/nni-nightly .
+      echo '## Upload docker image ##'
+      docker push nnidev/nni-nightly
+    condition: eq(variables['build_docker_image'], 'true')
+    displayName: Build and upload docker image
+
+  - script: |
+      set -e
+      cd test
+      python training_service/nnitest/generate_ts_config.py \
+          --ts aml \
+          --subscription_id $(subscriptionId) \
+          --resource_group $(resourceGroup) \
+          --workspace_name $(workspaceName) \
+          --compute_target $(computeTarget) \
+          --nni_manager_ip $(manager_ip) \
+          --nni_docker_image nnidev/nni-nightly
+      python training_service/nnitest/run_tests.py --config training_service/config/integration_tests.yml --ts aml
+    displayName: Integration test
+
+  - template: templates/save-crashed-info.yml

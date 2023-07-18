@@ -1,0 +1,18 @@
+# Run following command first to install dependencies of BOHB tuner:
+#   $ python3 -m pip install nni[BOHB]
+
+searchSpaceFile: search_space.json
+trialCommand: python3 mnist.py
+trialGpuNumber: 0
+trialConcurrency: 1
+maxExperimentDuration: 10h
+maxTrialNumber: 1000
+advisor:
+  name: BOHB
+  classArgs:
+    max_budget: 27
+    min_budget: 1
+    eta: 3
+    optimize_mode: maximize
+trainingService:  # For other platforms, check mnist-pytorch example
+  platform: local
