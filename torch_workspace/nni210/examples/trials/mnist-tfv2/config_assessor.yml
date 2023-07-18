@@ -1,0 +1,16 @@
+searchSpaceFile: search_space.json
+trialCommand: python3 mnist.py
+trialGpuNumber: 0
+trialConcurrency: 2
+maxTrialNumber: 50
+tuner:
+  name: TPE
+  classArgs:
+    optimize_mode: maximize
+assessor:  # Specify early-stop algorithm
+  name: Curvefitting
+  classArgs:
+    epoch_num: 20
+    threshold: 0.9
+trainingService:
+  platform: local
